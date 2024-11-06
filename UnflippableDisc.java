@@ -1,18 +1,27 @@
-public class UnflippableDisc implements Disc {
+public class UnflippableDisc implements Disc
+{
+    private Player _owner;
+
+    public UnflippableDisc(Player owner) {
+        this._owner = owner;
+    }
+
     @Override
-    public Player getOwner()
+    public Player get_owner()
     {
 
-        return null;
+        return _owner;
     }
 
     @Override
-    public void setOwner(Player player) {
-
+    public void set_owner(Player owner)
+    {
+        this._owner = owner;
     }
 
     @Override
-    public String getType() {
-        return "";
+    public String getType()
+    {
+        return "⭕";
     }
 }

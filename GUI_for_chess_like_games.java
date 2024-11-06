@@ -292,7 +292,7 @@ public class GUI_for_chess_like_games extends JFrame {
                     // Update the button's appearance based on the new piece position
                     String type = disc.getType();
                     buttons[row][col].setText(type);
-                    if ((disc.getOwner().isPlayerOne())) {
+                    if ((disc.get_owner().isPlayerOne())) {
                         buttons[row][col].setForeground(Color.BLUE);
                     } else {
                         buttons[row][col].setForeground(new Color(255, 0, 0));
@@ -372,7 +372,7 @@ public class GUI_for_chess_like_games extends JFrame {
                     Disc disc = gameLogic.getDiscAtPosition(new Position(row, col));
                     String type = disc.getType();
                     buttons[row][col].setText(type);
-                    if ((disc.getOwner().isPlayerOne())) {
+                    if ((disc.get_owner().isPlayerOne())) {
                         buttons[row][col].setForeground(Color.BLUE);
                     } else {
                         buttons[row][col].setForeground(new Color(255, 0, 0));
