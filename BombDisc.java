@@ -21,6 +21,6 @@ public class BombDisc implements Disc
     @Override
     public String getType()
     {
-        return "\uD83D\uDCA3";
+        return "💣";
     }
 }
