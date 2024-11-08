@@ -69,7 +69,9 @@ public class GameLogic implements PlayableLogic {
     }
 
     @Override
-    public boolean isFirstPlayerTurn() {
+    public boolean isFirstPlayerTurn()
+    {
+
         return false;
     }
 
