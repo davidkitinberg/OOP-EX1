@@ -21,4 +21,11 @@ public class Position
         return col;
     }
 
+    public int getRow() {
+        return row;
+    }
+    public Position getPosition(Position pos)
+    {
+        return new Position(pos.row(), pos.col());
+    }
 }
