@@ -8,6 +8,7 @@ public class GameLogic implements PlayableLogic {
     private ArrayList<Player> players;
     private boolean isFirstPlayerTurn;
     private Stack<Move> moveHistory;
+    private int placedDiscsCount = 0; // Track the number of placed discs on the board
     private int[][] directions = {
             {-1, 0}, {1, 0}, {0, -1}, {0, 1},   // Up, Down, Left, Right
             {-1, -1}, {-1, 1}, {1, -1}, {1, 1}  // Diagonals
@@ -32,7 +33,8 @@ public class GameLogic implements PlayableLogic {
 
     @Override
     public boolean locate_disc(Position a, Disc disc) {
-        if (!isValidMove(a, disc)) {
+        if (!isValidMove(a, disc))
+        {
             return false;
         }
 
@@ -45,6 +47,20 @@ public class GameLogic implements PlayableLogic {
 
         // Switch turn to the other player
         isFirstPlayerTurn = !isFirstPlayerTurn;
+        return true;
+    }
+
+    private boolean isValidMove(Position a, Disc disc)
+    {
+        if(board[a.getRow()][a.getCol()] != null) {return false;} // Check if the cell is empty
+        List<Position> collectionOfDiscsToFlip = new ArrayList<>();
+        for (int[] direction : directions) // Goes through all directions in for loop
+        {
+            // Calls for a method that for each direction collects a list of position of discs on the board to be flipped
+            List<Position> discsToFlip = getDiscsToFlipInDirection(a, disc, direction);
+            collectionOfDiscsToFlip.addAll(discsToFlip);
+        }
+        if(collectionOfDiscsToFlip.isEmpty()) {return false;}
         return true;
     }
 
@@ -94,6 +110,10 @@ public class GameLogic implements PlayableLogic {
 
     @Override
     public boolean isGameFinished() {
+        // If the board is full, the game is finished
+        if (placedDiscsCount == BOARD_SIZE * BOARD_SIZE) {
+            return true;
+        }
         return false;
     }
 
@@ -106,24 +126,30 @@ public class GameLogic implements PlayableLogic {
 
     @Override
     public void undoLastMove() {
-        if (moveHistory.isEmpty()) {
+        if (moveHistory.isEmpty())
+        {
             System.out.println("Nothing to undo");
-        } else if (players.get(0).isHuman() && players.get(1).isHuman())
+        }
+        else if (players.get(0).isHuman() && players.get(1).isHuman())
         {
             Move lastMove = moveHistory.pop();
             Position pos = lastMove.getPosition();
             board[pos.getRow()][pos.getCol()] = null; // Remove the disc
         }
+        else throw new RuntimeException("Only works when 2 humans are playing.");
 
     }
-
+    //This method flips the opponent discs
     private void flipOpponentDiscs(Position startPosition, Disc disc)
     {
 
-        for (int[] direction : directions) {
+        for (int[] direction : directions) // Goes through all directions in for loop
+        {
+            // Calls for a method that for each direction collects a list of position of discs on the board to be flipped
             List<Position> discsToFlip = getDiscsToFlipInDirection(startPosition, disc, direction);
-
-            for (Position position : discsToFlip) {
+            // Another for loop to go through all positions in the list and flip them using flipDisc method
+            for (Position position : discsToFlip)
+            {
                 flipDisc(position);
             }
         }
@@ -163,7 +189,7 @@ public class GameLogic implements PlayableLogic {
         return isFirstPlayerTurn() ? players.get(0) : players.get(1);
     }
 
-
+    //This method flips the discs on the board by instance of disc
     private void flipDisc(Position position)
     {
         Disc disc = board[position.row()][position.col()]; // New Disc initialization
@@ -177,6 +203,7 @@ public class GameLogic implements PlayableLogic {
         }
         // Unflippable disc should not be flipped
     }
+    //Designated method to flip bomb discs
     private void explode(Position bombPosition)
     {
         for (int[] direction : directions)
