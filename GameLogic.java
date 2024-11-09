@@ -111,7 +111,7 @@ public class GameLogic implements PlayableLogic {
     @Override
     public boolean isGameFinished() {
         // If the board is full, the game is finished
-        if (placedDiscsCount == BOARD_SIZE * BOARD_SIZE) {
+        if (placedDiscsCount == BOARD_SIZE * BOARD_SIZE || ValidMoves().isEmpty()) {
             return true;
         }
         return false;
@@ -136,7 +136,7 @@ public class GameLogic implements PlayableLogic {
             Position pos = lastMove.getPosition();
             board[pos.getRow()][pos.getCol()] = null; // Remove the disc
         }
-        else throw new RuntimeException("Only works when 2 humans are playing.");
+        else System.out.println("Only works when 2 humans are playing.");
 
     }
     //This method flips the opponent discs

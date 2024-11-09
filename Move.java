@@ -28,4 +28,10 @@ public Move(Position position, Disc placedDisc)
         return placedDisc;
     }
 
+    public Position position() {
+        return null;
+    }
+
+    public Disc disc() {
+    }
 }
