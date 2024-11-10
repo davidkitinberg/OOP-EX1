@@ -19,6 +19,8 @@ public class GameLogic implements PlayableLogic {
         this.players = new ArrayList<>(2);
         Player player1 = players.get(1);
         Player player2 = players.get(2);
+        players.add(player1);
+        players.add(player2);
         this.isFirstPlayerTurn = true; // Set to true for first player's turn
         moveHistory = new Stack<>();
         initializeBoard();
