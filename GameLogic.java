@@ -16,7 +16,9 @@ public class GameLogic implements PlayableLogic {
 
     public GameLogic() {
         this.board = new Disc[BOARD_SIZE][BOARD_SIZE];
-         this.players = new ArrayList<>(2);
+        this.players = new ArrayList<>(2);
+        Player player1 = players.get(1);
+        Player player2 = players.get(2);
         this.isFirstPlayerTurn = true; // Set to true for first player's turn
         moveHistory = new Stack<>();
         initializeBoard();
@@ -25,10 +27,10 @@ public class GameLogic implements PlayableLogic {
     private void initializeBoard() {
         // Place the starting four discs in the center of the board
         int mid = BOARD_SIZE / 2;
-        board[mid - 1][mid - 1] = new SimpleDisc(players.get(0)); // Black
-        board[mid - 1][mid] = new SimpleDisc(players.get(1)); // White
-        board[mid][mid - 1] = new SimpleDisc(players.get(1)); // White
-        board[mid][mid] = new SimpleDisc(players.get(0)); // Black
+        board[mid - 1][mid - 1] = new SimpleDisc(players.get(1)); // Black
+        board[mid - 1][mid] = new SimpleDisc(players.get(2)); // White
+        board[mid][mid - 1] = new SimpleDisc(players.get(2)); // White
+        board[mid][mid] = new SimpleDisc(players.get(1)); // Black
         placedDiscsCount = 4;
     }
 
