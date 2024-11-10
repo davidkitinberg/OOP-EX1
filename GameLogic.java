@@ -8,7 +8,7 @@ public class GameLogic implements PlayableLogic {
     private ArrayList<Player> players;
     private boolean isFirstPlayerTurn;
     private Stack<Move> moveHistory;
-    private int placedDiscsCount = 0; // Track the number of placed discs on the board
+    private int placedDiscsCount = 4; // Track the number of placed discs on the board
     private int[][] directions = {
             {-1, 0}, {1, 0}, {0, -1}, {0, 1},   // Up, Down, Left, Right
             {-1, -1}, {-1, 1}, {1, -1}, {1, 1}  // Diagonals
@@ -16,7 +16,7 @@ public class GameLogic implements PlayableLogic {
 
     public GameLogic() {
         this.board = new Disc[BOARD_SIZE][BOARD_SIZE];
-        this.players = new ArrayList<>(2);
+         this.players = new ArrayList<>(2);
         this.isFirstPlayerTurn = true; // Set to true for first player's turn
         moveHistory = new Stack<>();
         initializeBoard();
@@ -29,6 +29,7 @@ public class GameLogic implements PlayableLogic {
         board[mid - 1][mid] = new SimpleDisc(players.get(1)); // White
         board[mid][mid - 1] = new SimpleDisc(players.get(1)); // White
         board[mid][mid] = new SimpleDisc(players.get(0)); // Black
+        placedDiscsCount = 4;
     }
 
     @Override
@@ -47,6 +48,7 @@ public class GameLogic implements PlayableLogic {
 
         // Switch turn to the other player
         isFirstPlayerTurn = !isFirstPlayerTurn;
+        placedDiscsCount++;
         return true;
     }
 
@@ -77,6 +79,8 @@ public class GameLogic implements PlayableLogic {
 
     @Override
     public List<Position> ValidMoves() {
+        List<Position> validMoves = new ArrayList<>();
+
         return List.of();
     }
 
