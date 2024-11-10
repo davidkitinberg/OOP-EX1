@@ -20,6 +20,7 @@ public Move(Position position, Disc placedDisc)
 }
 
 
+
     public Position getPosition()
     {
         return position;
@@ -29,9 +30,10 @@ public Move(Position position, Disc placedDisc)
     }
 
     public Position position() {
-        return null;
+        return position;
     }
 
     public Disc disc() {
+    return placedDisc;
     }
 }

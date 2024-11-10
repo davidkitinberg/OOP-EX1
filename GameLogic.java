@@ -81,6 +81,7 @@ public class GameLogic implements PlayableLogic {
     public List<Position> ValidMoves() {
         List<Position> validMoves = new ArrayList<>();
 
+
         return List.of();
     }
 
