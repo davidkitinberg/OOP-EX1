@@ -5,7 +5,8 @@ import java.util.Stack;
 public class GameLogic implements PlayableLogic {
     private static final int BOARD_SIZE = 8;
     private Disc[][] board;
-    private ArrayList<Player> players;
+    private Player player1;
+    private Player player2;
     private boolean isFirstPlayerTurn;
     private Stack<Move> moveHistory;
     private int placedDiscsCount = 4; // Track the number of placed discs on the board
@@ -16,23 +17,17 @@ public class GameLogic implements PlayableLogic {
 
     public GameLogic() {
         this.board = new Disc[BOARD_SIZE][BOARD_SIZE];
-        this.players = new ArrayList<>(2);
-        Player player1 = players.get(1);
-        Player player2 = players.get(2);
-        players.add(player1);
-        players.add(player2);
         this.isFirstPlayerTurn = true; // Set to true for first player's turn
         moveHistory = new Stack<>();
-        initializeBoard();
     }
 
     private void initializeBoard() {
         // Place the starting four discs in the center of the board
         int mid = BOARD_SIZE / 2;
-        board[mid - 1][mid - 1] = new SimpleDisc(players.get(1)); // Black
-        board[mid - 1][mid] = new SimpleDisc(players.get(2)); // White
-        board[mid][mid - 1] = new SimpleDisc(players.get(2)); // White
-        board[mid][mid] = new SimpleDisc(players.get(1)); // Black
+        board[mid - 1][mid - 1] = new SimpleDisc(player1); // Black
+        board[mid - 1][mid] = new SimpleDisc(player2); // White
+        board[mid][mid - 1] = new SimpleDisc(player2); // White
+        board[mid][mid] = new SimpleDisc(player1); // Black
         placedDiscsCount = 4;
     }
 
@@ -96,19 +91,19 @@ public class GameLogic implements PlayableLogic {
 
     @Override
     public Player getFirstPlayer() {
-        return players.get(0);
+        return this.player1;
     }
 
     @Override
     public Player getSecondPlayer() {
-        return players.get(1);
+        return this.player2;
     }
 
     @Override
     public void setPlayers(Player player1, Player player2) {
-        players.clear();
-        players.add(player1);
-        players.add(player2);
+        this.player1 = player1;
+        this.player2 = player2;
+        initializeBoard();
     }
 
     @Override
@@ -129,8 +124,11 @@ public class GameLogic implements PlayableLogic {
     @Override
     public void reset() {
         board = new Disc[BOARD_SIZE][BOARD_SIZE];
-        players = new ArrayList<>(2);
-        moveHistory = new Stack<>();
+        setPlayers(player1, player2);
+        placedDiscsCount = 4;
+        initializeBoard();
+        moveHistory.clear();
+        isFirstPlayerTurn = true;
     }
 
     @Override
@@ -139,11 +137,12 @@ public class GameLogic implements PlayableLogic {
         {
             System.out.println("Nothing to undo");
         }
-        else if (players.get(0).isHuman() && players.get(1).isHuman())
+        if (player1.isHuman() && player2.isHuman())
         {
             Move lastMove = moveHistory.pop();
             Position pos = lastMove.getPosition();
             board[pos.getRow()][pos.getCol()] = null; // Remove the disc
+            placedDiscsCount--;
         }
         else System.out.println("Only works when 2 humans are playing.");
 
@@ -195,7 +194,7 @@ public class GameLogic implements PlayableLogic {
     }
 
     private Player getCurrentPlayer() {
-        return isFirstPlayerTurn() ? players.get(0) : players.get(1);
+        return isFirstPlayerTurn() ? player1 : player2;
     }
 
     //This method flips the discs on the board by instance of disc
