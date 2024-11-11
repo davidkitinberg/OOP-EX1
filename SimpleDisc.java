@@ -1,6 +1,7 @@
 public class SimpleDisc implements Disc
 {
     private Player _owner;
+    private Disc[][] _board;
 
     public SimpleDisc(Player owner)
     {
@@ -22,4 +23,8 @@ public class SimpleDisc implements Disc
     public String getType() {
         return "⬤";
     }
+//    public Disc[][] get_board()
+//    {
+//        return _board;
+//    }
 }
