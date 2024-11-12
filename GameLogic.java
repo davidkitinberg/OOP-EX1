@@ -138,11 +138,6 @@ public class GameLogic implements PlayableLogic {
         Disc disc = new SimpleDisc(getCurrentPlayer());// Current player's disc
         int totalFlips = 0;
 
-        if (disc == null) {
-            //System.out.println("No disc for the current player, countFlips skipped.");
-            return 0;
-        }
-
         // Check each direction and count flips
         for (int[] direction : directions) {
             List<Position> discsToFlipInDirection = getDiscsToFlipInDirection(a, disc, direction);
