@@ -8,6 +8,7 @@ public class GameLogic implements PlayableLogic {
     private Player player1;
     private Player player2;
     private boolean isFirstPlayerTurn;
+    private ArrayList<Position> flippedpositions;
     private  Stack<Move> moveHistory;
     private int placedDiscsCount = 4; // Track the number of placed discs on the board
     private final int[][] directions = {
@@ -33,8 +34,15 @@ public class GameLogic implements PlayableLogic {
 
     @Override
     public boolean locate_disc(Position a, Disc disc) {
-        if (!isValidMove(a, disc))
-        {
+        // Initialize flippedpositions if it is null
+        if (flippedpositions == null) {
+            flippedpositions = new ArrayList<>();
+        } else {
+            // Clear flippedpositions to ensure it only contains positions for the current move
+            flippedpositions.clear();
+        }
+
+        if (!isValidMove(a, disc)) {
             return false;
         }
 
@@ -55,15 +63,15 @@ public class GameLogic implements PlayableLogic {
     {
         // Ensure disc isn't null to avoid unnecessary checks
         if (disc == null) {
-            System.out.println("Skipping position due to null disc at Position: " + a.getRow() + ", " + a.getCol());
+            //System.out.println("Skipping position due to null disc at Position: " + a.getRow() + ", " + a.getCol());
             return false;
         }
 
-        System.out.println("Checking move at Position: " + a.getRow() + ", " + a.getCol());
+        //System.out.println("Checking move at Position: " + a.getRow() + ", " + a.getCol());
 
         // Check if the cell is empty
         if (board[a.getRow()][a.getCol()] != null) {
-            System.out.println("Position already occupied");
+            //System.out.println("Position already occupied");
             return false;
         }
 
@@ -81,7 +89,7 @@ public class GameLogic implements PlayableLogic {
 
         // Check if we have any discs to flip in total
         if (collectionOfDiscsToFlip.isEmpty()) {
-            System.out.println("No discs to flip, move invalid");
+            //System.out.println("No discs to flip, move invalid");
             return false;
         }
 
@@ -109,11 +117,16 @@ public class GameLogic implements PlayableLogic {
                 Position potentialPosition = new Position(row, col);
                 if (isValidMove(potentialPosition, currentDisc)) {
                     int flips = countFlips(potentialPosition); // Count potential flips for each valid move
-                    System.out.println("Valid move at: " + row + ", " + col + " will flip " + flips + " discs.");
+                    //System.out.println("Valid move at: " + row + ", " + col + " will flip " + flips + " discs.");
                     validMoves.add(potentialPosition);
-                } else {
-                    System.out.println("Position " + row + ", " + col + " is not a valid move");
-                }
+                    }
+                    if(board[row][col] != null)
+                    {
+                        if(isValidMove(new Position(row, col), board[row][col]))
+                        {
+                            validMoves.add(new Position(row, col));
+                        }
+                    }
             }
         }
         return validMoves;
@@ -126,7 +139,7 @@ public class GameLogic implements PlayableLogic {
         int totalFlips = 0;
 
         if (disc == null) {
-            System.out.println("No disc for the current player, countFlips skipped.");
+            //System.out.println("No disc for the current player, countFlips skipped.");
             return 0;
         }
 
@@ -183,19 +196,37 @@ public class GameLogic implements PlayableLogic {
 
     @Override
     public void undoLastMove() {
-        if (moveHistory.isEmpty())
-        {
-            System.out.println("Nothing to undo");
+        if (moveHistory.isEmpty()) {
+            System.out.println("Nothing to undo, already at initial board state");
+            return;
         }
-        if (player1.isHuman() && player2.isHuman())
-        {
-            Move lastMove = moveHistory.pop();
-            Position pos = lastMove.getPosition();
-            board[pos.getRow()][pos.getCol()] = null; // Remove the disc
-            placedDiscsCount--;
-        }
-        else System.out.println("Only works when 2 humans are playing.");
 
+        Move lastMove = moveHistory.pop();
+        Position pos = lastMove.getPosition();
+
+        // Clear the disc at the last move's position
+        board[pos.getRow()][pos.getCol()] = null;
+
+        // Revert any discs flipped during this move
+        if (flippedpositions != null && !flippedpositions.isEmpty()) {
+            for (Position flippedPos : flippedpositions) {
+                Disc flippedDisc = board[flippedPos.getRow()][flippedPos.getCol()];
+                // Flip the disc back to the opposite owner
+                flippedDisc.set_owner(getCurrentPlayer());
+            }
+        }
+
+        // Adjust state counters
+        isFirstPlayerTurn = !isFirstPlayerTurn;
+        placedDiscsCount--;
+
+        // If this was the last move, reset to the initial state
+        if (moveHistory.isEmpty()) {
+            System.out.println("Reached the initial board state");
+            initializeBoard(); // Reinitialize the board to reset it visually and logically
+            isFirstPlayerTurn = true;
+            placedDiscsCount = 4; // Adjust according to initial discs
+        }
     }
     //This method flips the opponent discs
     private void flipOpponentDiscs(Position startPosition, Disc disc)
@@ -209,6 +240,8 @@ public class GameLogic implements PlayableLogic {
             for (Position position : discsToFlip)
             {
                 flipDisc(position);
+                flippedpositions.add(position); // adds the positions to be flipped
+
             }
         }
     }
@@ -230,21 +263,21 @@ public class GameLogic implements PlayableLogic {
 
             // Check for null to prevent NullPointerException
             if (currentDisc == null) {
-                System.out.println("Hit an empty spot at: " + row + ", " + col + ", stopping search in this direction");
+                //System.out.println("Hit an empty spot at: " + row + ", " + col + ", stopping search in this direction");
                 return new ArrayList<>(); // Return empty list if there's a null
             }
 
             // Check if current disc is an opponent's disc
             if (!currentDisc.get_owner().equals(disc.get_owner())) {
                 discsToFlip.add(new Position(row, col));
-                System.out.println("Adding disc to flip at: " + row + ", " + col);
+                //System.out.println("Adding disc to flip at: " + row + ", " + col);
             } else {
                 // We found a matching disc after opponent discs, so the move is valid in this direction
                 if (!discsToFlip.isEmpty()) {
-                    System.out.println("Found a sequence to flip ending at " + row + ", " + col);
+                    //System.out.println("Found a sequence to flip ending at " + row + ", " + col);
                     return discsToFlip;
                 } else {
-                    System.out.println("Found matching color disc at " + row + ", " + col + " but no discs to flip before it.");
+                    //System.out.println("Found matching color disc at " + row + ", " + col + " but no discs to flip before it.");
                     return new ArrayList<>();
                 }
             }
