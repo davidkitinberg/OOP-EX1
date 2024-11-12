@@ -174,6 +174,7 @@ public class GameLogic implements PlayableLogic {
     public boolean isGameFinished() {
         // If the board is full, the game is finished
         if (placedDiscsCount == BOARD_SIZE * BOARD_SIZE || ValidMoves().isEmpty()) {
+            getCurrentPlayer().addWin();
             return true;
         }
         return false;
