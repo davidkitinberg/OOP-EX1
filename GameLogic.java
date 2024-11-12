@@ -8,7 +8,7 @@ public class GameLogic implements PlayableLogic {
     private Player player1;
     private Player player2;
     private boolean isFirstPlayerTurn;
-    private final Stack<Move> moveHistory;
+    private  Stack<Move> moveHistory;
     private int placedDiscsCount = 4; // Track the number of placed discs on the board
     private final int[][] directions = {
             {-1, 0}, {1, 0}, {0, -1}, {0, 1},   // Up, Down, Left, Right
