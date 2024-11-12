@@ -9,6 +9,7 @@ public class GameLogic implements PlayableLogic {
     private Player player2;
     private boolean isFirstPlayerTurn;
     private Stack<Move> moveHistory;
+    private ArrayList<Position> flippedpositions;
     private int placedDiscsCount = 4; // Track the number of placed discs on the board
     private int[][] directions = {
             {-1, 0}, {1, 0}, {0, -1}, {0, 1},   // Up, Down, Left, Right
@@ -37,7 +38,10 @@ public class GameLogic implements PlayableLogic {
         {
             return false;
         }
-
+        if(!flippedpositions.isEmpty())
+        {
+            flippedpositions = new ArrayList<Position>(); // Clears flipped positions list
+        }
         // Place the disc on the board
         board[a.getRow()][a.getCol()] = disc;
         flipOpponentDiscs(a, disc);
@@ -79,13 +83,26 @@ public class GameLogic implements PlayableLogic {
     @Override
     public List<Position> ValidMoves() {
         List<Position> validMoves = new ArrayList<>();
-
-
-        return List.of();
+        for(int i = 0; i < BOARD_SIZE; i++)
+        {
+            for(int j = 0; j < BOARD_SIZE; j++)
+            {
+                if(board[i][j] != null)
+                {
+                    if(isValidMove(new Position(i, j), board[i][j]))
+                    {
+                        validMoves.add(new Position(i, j));
+                    }
+                }
+            }
+        }
+        return validMoves;
     }
 
     @Override
     public int countFlips(Position a) {
+
+
         return 0;
     }
 
@@ -141,6 +158,10 @@ public class GameLogic implements PlayableLogic {
         {
             Move lastMove = moveHistory.pop();
             Position pos = lastMove.getPosition();
+            for (Position position : flippedpositions) // flip the positions from the last move by dics type.
+            {
+                flipDisc(position);
+            }
             board[pos.getRow()][pos.getCol()] = null; // Remove the disc
             placedDiscsCount--;
         }
@@ -159,6 +180,7 @@ public class GameLogic implements PlayableLogic {
             for (Position position : discsToFlip)
             {
                 flipDisc(position);
+                flippedpositions.add(position); // adds the positions to be flipped
             }
         }
     }
