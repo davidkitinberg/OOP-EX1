@@ -15,6 +15,9 @@ public class GameLogic implements PlayableLogic {
             {-1, 0}, {1, 0}, {0, -1}, {0, 1},   // Up, Down, Left, Right
             {-1, -1}, {-1, 1}, {1, -1}, {1, 1}  // Diagonals
     };
+    private int firstPlayerCounter;
+    private int secondPlayerCounter;
+
 
     public GameLogic() {
         this.board = new Disc[BOARD_SIZE][BOARD_SIZE];
@@ -30,6 +33,8 @@ public class GameLogic implements PlayableLogic {
         board[mid][mid - 1] = new SimpleDisc(player2); // White
         board[mid][mid] = new SimpleDisc(player1); // Black
         placedDiscsCount = 4;
+        firstPlayerCounter = 0;
+        secondPlayerCounter = 0;
     }
 
     @Override
@@ -165,9 +170,32 @@ public class GameLogic implements PlayableLogic {
     @Override
     public boolean isGameFinished() {
         // If the board is full, the game is finished
-        if (placedDiscsCount == BOARD_SIZE * BOARD_SIZE || ValidMoves().isEmpty()) {
-            getCurrentPlayer().addWin();
-            return true;
+        if (placedDiscsCount == BOARD_SIZE * BOARD_SIZE || ValidMoves().isEmpty())
+        {
+            for (int row = 0; row < BOARD_SIZE; row++)
+            {
+                for (int col = 0; col < BOARD_SIZE; col++)
+                {
+                    Position potentialPosition = new Position(row, col);
+                    Disc disc = getDiscAtPosition(potentialPosition);
+                    if(isFirstPlayerTurn)
+                    {
+                        if(disc.get_owner().equals(getCurrentPlayer()))
+                            firstPlayerCounter++;
+                    }
+                    else {secondPlayerCounter++;}
+                }
+            }
+            if(firstPlayerCounter > secondPlayerCounter)
+            {
+                getFirstPlayer().addWin();
+                return true;
+            }
+            else
+            {
+                getSecondPlayer().addWin();
+                return true;
+            }
         }
         return false;
     }
@@ -317,17 +345,5 @@ public class GameLogic implements PlayableLogic {
             }
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
 
 }
