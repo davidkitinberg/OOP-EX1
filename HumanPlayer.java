@@ -9,9 +9,6 @@ public class HumanPlayer extends Player
         return true;
     }
 
-    public void play() {
-
-    }
 
 }
 

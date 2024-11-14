@@ -14,19 +14,23 @@ public class RandomAI extends AIPlayer {
     @Override
     public Move makeMove(PlayableLogic gameStatus)
     {
-        while (!gameStatus.isGameFinished())
+        if (gameStatus.isGameFinished())
         {
+            return null; // Game is finished; no move to make
+        }
             Random rand = new Random();
             List<Position> moves = gameStatus.ValidMoves();
             if (moves.isEmpty())
             {
-                moves = gameStatus.ValidMoves();
+                return null; // No valid moves available, return null
             }
-            int numMoves = moves.size();
-            int randomNum = rand.nextInt(numMoves);
-            gameStatus.locate_disc(moves.get(randomNum), disc);
-            return new Move(moves.get(randomNum), disc);
-        }
-        return null;
+            int randomNum = rand.nextInt(moves.size());
+            //gameStatus.locate_disc(moves.get(randomNum), disc);
+            Disc aiDisc = new SimpleDisc(this);
+            Position selectedMove = moves.get(randomNum);
+            System.out.println("RandomAI selected move at position: " + selectedMove + " with owner: " + aiDisc.get_owner());
+
+        return new Move(moves.get(randomNum), aiDisc);
+
     }
 }

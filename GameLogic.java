@@ -41,7 +41,7 @@ public class GameLogic implements PlayableLogic {
             // Clear flippedpositions to ensure it only contains positions for the current move
             flippedpositions.clear();
         }
-
+        if(!disc.get_owner().equals(getCurrentPlayer())) { disc.set_owner(getCurrentPlayer()); }
         if (!isValidMove(a, disc)) {
             return false;
         }
@@ -56,6 +56,7 @@ public class GameLogic implements PlayableLogic {
         // Switch turn to the other player
         isFirstPlayerTurn = !isFirstPlayerTurn;
         placedDiscsCount++;
+        System.out.println(placedDiscsCount);
         return true;
     }
 
@@ -110,23 +111,14 @@ public class GameLogic implements PlayableLogic {
     @Override
     public List<Position> ValidMoves() {
         List<Position> validMoves = new ArrayList<>();
-        Disc currentDisc = new SimpleDisc(getCurrentPlayer()); // Create a disc with the current player's owner
+        Disc currentDisc = new SimpleDisc(getCurrentPlayer()); // Use the current player's disc consistently
 
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
                 Position potentialPosition = new Position(row, col);
                 if (isValidMove(potentialPosition, currentDisc)) {
-                    int flips = countFlips(potentialPosition); // Count potential flips for each valid move
-                    //System.out.println("Valid move at: " + row + ", " + col + " will flip " + flips + " discs.");
                     validMoves.add(potentialPosition);
-                    }
-                    if(board[row][col] != null)
-                    {
-                        if(isValidMove(new Position(row, col), board[row][col]))
-                        {
-                            validMoves.add(new Position(row, col));
-                        }
-                    }
+                }
             }
         }
         return validMoves;
