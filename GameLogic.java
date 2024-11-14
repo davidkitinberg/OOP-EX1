@@ -294,7 +294,9 @@ public class GameLogic implements PlayableLogic {
         }
         else if(disc instanceof BombDisc)
         {
+            if(disc.get_owner() != getCurrentPlayer()) {disc.set_owner(getCurrentPlayer());}
             explode(position); // If bomb disc --> bomb flip
+            disc.set_owner(getCurrentPlayer());
         }
         // Unflippable disc should not be flipped
     }
