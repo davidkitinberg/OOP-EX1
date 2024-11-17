@@ -17,6 +17,8 @@ public class GameLogic implements PlayableLogic {
     };
     private int firstPlayerCounter;
     private int secondPlayerCounter;
+    private Stack<List<Position>> flippedPositionsHistory = new Stack<>();
+
 
 
     public GameLogic() {
@@ -26,6 +28,9 @@ public class GameLogic implements PlayableLogic {
     }
 
     private void initializeBoard() {
+        if (player1 == null || player2 == null) {
+            throw new IllegalStateException("Players must be set before initializing the board.");
+        }
         // Place the starting four discs in the center of the board
         int mid = BOARD_SIZE / 2;
         board[mid - 1][mid - 1] = new SimpleDisc(player1); // Black
@@ -37,35 +42,65 @@ public class GameLogic implements PlayableLogic {
         secondPlayerCounter = 0;
     }
 
-    @Override
-    public boolean locate_disc(Position a, Disc disc) {
-        // Initialize flippedpositions if it is null
-        if (flippedpositions == null) {
-            flippedpositions = new ArrayList<>();
-        } else {
-            // Clear flippedpositions to ensure it only contains positions for the current move
-            flippedpositions.clear();
-        }
-        if(!disc.get_owner().equals(getCurrentPlayer())) { disc.set_owner(getCurrentPlayer()); }
-        if (!isValidMove(a, disc)) {
-            return false;
-        }
-
-        // Place the disc on the board
-        board[a.getRow()][a.getCol()] = disc;
-        flipOpponentDiscs(a, disc);
-
-        // Record move for undo functionality
-        moveHistory.push(new Move(a, disc));
-
-        // Switch turn to the other player
-        isFirstPlayerTurn = !isFirstPlayerTurn;
-        placedDiscsCount++;
-        System.out.println(placedDiscsCount);
-        return true;
+//    @Override
+//    public boolean locate_disc(Position a, Disc disc) {
+//        // Initialize flippedpositions if it is null
+//        if (flippedpositions == null) {
+//            flippedpositions = new ArrayList<>();
+//        } else {
+//            // Clear flippedpositions to ensure it only contains positions for the current move
+//            flippedpositions.clear();
+//        }
+//        if(!disc.get_owner().equals(getCurrentPlayer())) { disc.set_owner(getCurrentPlayer()); }
+//        if (!isValidMove(a, disc)) {
+//            return false;
+//        }
+//
+//        // Place the disc on the board
+//        board[a.getRow()][a.getCol()] = disc;
+//        flipOpponentDiscs(a, disc);
+//
+//        // Record move for undo functionality
+//        moveHistory.push(new Move(a, disc));
+//
+//        // Switch turn to the other player
+//        isFirstPlayerTurn = !isFirstPlayerTurn;
+//        placedDiscsCount++;
+//        System.out.println(placedDiscsCount);
+//        return true;
+//    }
+@Override
+public boolean locate_disc(Position a, Disc disc) {
+    if (flippedpositions == null) {
+        flippedpositions = new ArrayList<>();
+    } else {
+        flippedpositions.clear();
     }
 
-    private boolean isValidMove(Position a, Disc disc)
+    if (!isValidMove(a, disc)) {
+        return false;
+    }
+
+    // Place the disc on the board
+    board[a.getRow()][a.getCol()] = disc;
+
+    // Flip opponent discs and collect their positions
+    flipOpponentDiscs(a, disc);
+
+    // Save flipped positions for undo functionality
+    flippedPositionsHistory.push(new ArrayList<>(flippedpositions));
+
+    // Record the move in the history
+    moveHistory.push(new Move(a, disc));
+
+    // Switch turn
+    isFirstPlayerTurn = !isFirstPlayerTurn;
+    placedDiscsCount++;
+    return true;
+}
+
+
+    public boolean isValidMove(Position a, Disc disc)
     {
         // Ensure disc isn't null to avoid unnecessary checks
         if (disc == null) {
@@ -178,11 +213,13 @@ public class GameLogic implements PlayableLogic {
                 {
                     Position potentialPosition = new Position(row, col);
                     Disc disc = getDiscAtPosition(potentialPosition);
-                    if(isFirstPlayerTurn)
+                    if(getDiscAtPosition(potentialPosition) == null)
                     {
-                        if(disc.get_owner().equals(getCurrentPlayer()))
-                            firstPlayerCounter++;
+                        break;
                     }
+                    else if(disc.get_owner().equals(getCurrentPlayer()))
+                        firstPlayerCounter++;
+
                     else {secondPlayerCounter++;}
                 }
             }
@@ -210,40 +247,78 @@ public class GameLogic implements PlayableLogic {
         isFirstPlayerTurn = true;
     }
 
-    @Override
-    public void undoLastMove() {
-        if (moveHistory.isEmpty()) {
-            System.out.println("Nothing to undo, already at initial board state");
-            return;
-        }
+//    @Override
+//    public void undoLastMove() {
+//        if (moveHistory.isEmpty()) {
+//            System.out.println("Nothing to undo, already at initial board state");
+//            return;
+//        }
+//
+//        Move lastMove = moveHistory.pop();
+//        Position pos = lastMove.getPosition();
+//
+//        // Clear the disc at the last move's position
+//        board[pos.getRow()][pos.getCol()] = null;
+//
+//        // Revert any discs flipped during this move
+//        if (flippedpositions != null && !flippedpositions.isEmpty()) {
+//            for (Position flippedPos : flippedpositions) {
+//                Disc flippedDisc = board[flippedPos.getRow()][flippedPos.getCol()];
+//                // Flip the disc back to the opposite owner
+//                flippedDisc.set_owner(getCurrentPlayer());
+//            }
+//        }
+//
+//        // Adjust state counters
+//        isFirstPlayerTurn = !isFirstPlayerTurn;
+//        placedDiscsCount--;
+//
+//        // If this was the last move, reset to the initial state
+//        if (moveHistory.isEmpty()) {
+//            System.out.println("Reached the initial board state");
+//            initializeBoard(); // Reinitialize the board to reset it visually and logically
+//            isFirstPlayerTurn = true;
+//            placedDiscsCount = 4; // Adjust according to initial discs
+//        }
+//    }
+@Override
+public void undoLastMove() {
+    if (moveHistory.isEmpty() || flippedPositionsHistory.isEmpty()) {
+        System.out.println("Nothing to undo, already at initial board state");
+        return;
+    }
 
-        Move lastMove = moveHistory.pop();
-        Position pos = lastMove.getPosition();
+    // Pop the last move from the history
+    Move lastMove = moveHistory.pop();
+    Position pos = lastMove.getPosition();
 
-        // Clear the disc at the last move's position
-        board[pos.getRow()][pos.getCol()] = null;
+    // Clear the disc at the last move's position
+    board[pos.getRow()][pos.getCol()] = null;
 
-        // Revert any discs flipped during this move
-        if (flippedpositions != null && !flippedpositions.isEmpty()) {
-            for (Position flippedPos : flippedpositions) {
-                Disc flippedDisc = board[flippedPos.getRow()][flippedPos.getCol()];
-                // Flip the disc back to the opposite owner
-                flippedDisc.set_owner(getCurrentPlayer());
-            }
-        }
-
-        // Adjust state counters
-        isFirstPlayerTurn = !isFirstPlayerTurn;
-        placedDiscsCount--;
-
-        // If this was the last move, reset to the initial state
-        if (moveHistory.isEmpty()) {
-            System.out.println("Reached the initial board state");
-            initializeBoard(); // Reinitialize the board to reset it visually and logically
-            isFirstPlayerTurn = true;
-            placedDiscsCount = 4; // Adjust according to initial discs
+    // Revert flipped positions for this move
+    List<Position> lastFlippedPositions = flippedPositionsHistory.pop();
+    for (Position flippedPos : lastFlippedPositions) {
+        Disc flippedDisc = board[flippedPos.getRow()][flippedPos.getCol()];
+        if (flippedDisc != null) {
+            flippedDisc.set_owner(
+                    flippedDisc.get_owner().equals(player1) ? player2 : player1
+            );
         }
     }
+
+    // Revert game state
+    isFirstPlayerTurn = !isFirstPlayerTurn;
+    placedDiscsCount--;
+
+    // Reset to initial state if no moves remain
+    if (moveHistory.isEmpty()) {
+        System.out.println("Reached the initial board state");
+        initializeBoard();
+        isFirstPlayerTurn = true;
+        placedDiscsCount = 4; // Adjust according to initial setup
+    }
+}
+
     //This method flips the opponent discs
     private void flipOpponentDiscs(Position startPosition, Disc disc)
     {
