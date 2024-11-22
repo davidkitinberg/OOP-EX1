@@ -46,7 +46,6 @@ public abstract class Player {
     public int getNumber_of_bombs() {
         return number_of_bombs;
     }
-
     public int getNumber_of_unflippedable() {
         return number_of_unflippedable;
     }
