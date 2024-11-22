@@ -79,16 +79,22 @@ public boolean locate_disc(Position a, Disc disc) {
 
     Player currentPlayer = getCurrentPlayer();
 
-    // Bomb placement logic
+    // Ensure correct ownership for special discs
     if (disc instanceof BombDisc) {
         if (currentPlayer.getNumber_of_bombs() <= 0) {
             System.out.println("No bombs left for " + (currentPlayer.isPlayerOne() ? "Player 1" : "Player 2"));
             return false;
         }
         currentPlayer.reduce_bomb();
-        disc.set_owner(currentPlayer); // Set ownership of the bomb
+    } else if (disc instanceof UnflippableDisc) {
+        if (currentPlayer.getNumber_of_unflippedable() <= 0) {
+            System.out.println("No unflippables left for " + (currentPlayer.isPlayerOne() ? "Player 1" : "Player 2"));
+            return false;
+        }
+        currentPlayer.reduce_unflippedable();
+        disc.set_owner(currentPlayer); // Ensure ownership is explicitly set
     } else {
-        disc.set_owner(currentPlayer); // Normal disc logic
+        disc.set_owner(currentPlayer); // Ensure normal discs are owned by the current player
     }
 
     if (!isValidMove(a, disc)) {
@@ -98,17 +104,12 @@ public boolean locate_disc(Position a, Disc disc) {
     // Place the disc on the board
     board[a.getRow()][a.getCol()] = disc;
 
-    // Trigger explosion for bombs
-    if (disc instanceof BombDisc) {
-        explode(a, currentPlayer);
-    }
-
-    // Handle flipping of opponent discs
+    // Flip opponent discs (unflippables remain untouched)
     for (int[] direction : directions) {
         List<Position> discsToFlip = getDiscsToFlipInDirection(a, disc, direction);
         for (Position position : discsToFlip) {
             Disc discToFlip = board[position.getRow()][position.getCol()];
-            if (!(discToFlip instanceof UnflippableDisc)) {
+            if (!(discToFlip instanceof UnflippableDisc)) { // Skip unflippable discs
                 discToFlip.set_owner(disc.get_owner());
             }
             flippedpositions.add(position);
@@ -426,6 +427,8 @@ public void undoLastMove() {
 
 
     private void explode(Position bombPosition, Player bombOwner) {
+        // No bomb reduction here; it happens only when the bomb is placed
+
         for (int[] direction : directions) {
             int row = bombPosition.getRow() + direction[0];
             int col = bombPosition.getCol() + direction[1];
