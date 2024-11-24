@@ -16,6 +16,7 @@ public class GameLogic implements PlayableLogic {
     private int firstPlayerCounter;
     private int secondPlayerCounter;
     private Stack<Disc[][]> boardHistory = new Stack<>();
+    private  Stack<Move> moveHistory;
 
 
 
@@ -25,7 +26,7 @@ public class GameLogic implements PlayableLogic {
     public GameLogic() {
         this.board = new Disc[BOARD_SIZE][BOARD_SIZE];
         this.isFirstPlayerTurn = true; // Set to true for first player's turn
-        //moveHistory = new Stack<>();
+        moveHistory = new Stack<>();
         boardHistory = new Stack<>();
     }
 
@@ -47,7 +48,8 @@ public class GameLogic implements PlayableLogic {
 @Override
 public boolean locate_disc(Position a, Disc disc) {
     Player currentPlayer = getCurrentPlayer();
-    boardHistory.push(copyBoard(this.board));
+
+
 
     // Ensure correct ownership for special discs
     if (disc instanceof BombDisc)
@@ -75,7 +77,13 @@ public boolean locate_disc(Position a, Disc disc) {
         System.out.println("Move at " + a.getRow() + ", " + a.getCol() + " is invalid.");
         return false;
     }
-    System.out.println("Move at " + a.getRow() + ", " + a.getCol() + " is valid.");
+    else
+    {
+        moveHistory.push(new Move(a, disc));
+        boardHistory.push(copyBoard(this.board));
+
+    }
+        System.out.println("Move at " + a.getRow() + ", " + a.getCol() + " is valid.");
 
     // Place the disc on the board
     board[a.getRow()][a.getCol()] = disc;
@@ -335,20 +343,31 @@ public boolean locate_disc(Position a, Disc disc) {
         setPlayers(player1, player2);
         placedDiscsCount = 4;
         initializeBoard();
-        //moveHistory.clear();
+        moveHistory.clear();
         boardHistory.clear();
         isFirstPlayerTurn = true;
     }
 
 @Override
 public void undoLastMove() {
-    if (boardHistory.isEmpty()) {
+    if (boardHistory.isEmpty() || moveHistory.isEmpty()) {
         System.out.println("Nothing to undo, already at initial board state");
         return;
     }
 
     // Pop the last move from the history
-    //Move lastMove = moveHistory.pop();
+    Move lastMove = moveHistory.pop();
+    Position pos = lastMove.getPosition();
+    Disc disc = getDiscAtPosition(pos);
+    if (disc instanceof UnflippableDisc)
+    {
+        disc.get_owner().number_of_unflippedable++;
+    }
+    if(disc instanceof BombDisc)
+    {
+        disc.get_owner().number_of_bombs++;
+    }
+
     Disc[][] lastBoard = boardHistory.pop();
     for(int i=0;i<BOARD_SIZE;i++)
     {
