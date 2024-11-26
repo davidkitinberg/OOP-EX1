@@ -1,7 +1,8 @@
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
+/**
+ * This class represents the rule of the game and its logic.
+ */
 public class GameLogic implements PlayableLogic {
     private static final int BOARD_SIZE = 8;
     private Disc[][] board;
@@ -17,6 +18,8 @@ public class GameLogic implements PlayableLogic {
     private int secondPlayerCounter;
     private Stack<Disc[][]> boardHistory = new Stack<>();
     private  Stack<Move> moveHistory;
+    private Stack<List<Position>> flippedPositionsHistory = new Stack<>();
+
 
 
 
@@ -28,6 +31,7 @@ public class GameLogic implements PlayableLogic {
         this.isFirstPlayerTurn = true; // Set to true for first player's turn
         moveHistory = new Stack<>();
         boardHistory = new Stack<>();
+        flippedPositionsHistory = new Stack<>();
     }
 
     private void initializeBoard() {
@@ -49,19 +53,17 @@ public class GameLogic implements PlayableLogic {
 public boolean locate_disc(Position a, Disc disc) {
     Player currentPlayer = getCurrentPlayer();
 
-
-
     // Ensure correct ownership for special discs
     if (disc instanceof BombDisc)
     {
-        if (currentPlayer.getNumber_of_bombs() <= 0)
+        if (currentPlayer.getNumber_of_bombs() <= 0) // Check if there are still bomb discs to current player
         {
             System.out.println("No bombs left for " + (currentPlayer.isPlayerOne() ? "Player 1" : "Player 2"));
             return false;
         }
         currentPlayer.reduce_bomb();
     }
-    else if (disc instanceof UnflippableDisc)
+    else if (disc instanceof UnflippableDisc) // Check if there are still unflippable discs to current player
     {
         if (currentPlayer.getNumber_of_unflippedable() <= 0)
         {
@@ -71,46 +73,56 @@ public boolean locate_disc(Position a, Disc disc) {
         currentPlayer.reduce_unflippedable();
     }
 
-    // Debug: Check move validity
+    // Check move validity
     if (!isValidMove(a, disc))
     {
         System.out.println("Move at " + a.getRow() + ", " + a.getCol() + " is invalid.");
         return false;
     }
-    else
+    else // If move is valid we push it the stacks
     {
         moveHistory.push(new Move(a, disc));
         boardHistory.push(copyBoard(this.board));
 
     }
-        System.out.println("Move at " + a.getRow() + ", " + a.getCol() + " is valid.");
 
     // Place the disc on the board
     board[a.getRow()][a.getCol()] = disc;
-    System.out.println("Placed disc of type " + disc.getType() + " at position: " + a.getRow() + ", " + a.getCol());
+    System.out.printf("Player %d placed a %s in (%d, %d)\n",
+            currentPlayer.isPlayerOne() ? 1 : 2,
+            disc.getType(),
+            a.getRow(),
+            a.getCol()
+    );
 
+
+    List<Position> flippedPositionsForCurrentMove = new ArrayList<>();
     // Flip opponent discs and collect their positions
     for (int[] direction : directions)
     {
-        System.out.println("Processing direction: " + direction[0] + ", " + direction[1]);
+
         // Get a list of all positions to flip
         List<Position> discsToFlip = getDiscsToFlipInDirection(a, disc, direction);
 
+        // Iterate between all positions
         for (Position position : discsToFlip)
         {
             Disc discToFlip = board[position.getRow()][position.getCol()];
+            flippedPositionsForCurrentMove.add(position); // add flipped position for undo print
 
-            System.out.println("Flipping disc at position: " + position.getRow() + ", " + position.getCol());
+            // Printing current player flipping
+            System.out.printf("Player %d flipped the %s in (%d, %d)\n",
+                    currentPlayer.isPlayerOne() ? 1 : 2,
+                    discToFlip.getType(),
+                    position.getRow(),
+                    position.getCol()
+            );
+
             // Handling bomb discs explosion
             if (discToFlip instanceof BombDisc)
             {
-                System.out.println("BombDisc flipped at position: " + position.getRow() + ", " + position.getCol());
-
-                flipSurroundingDiscs(new Position(position.getRow(), position.getCol()), disc.get_owner());
-
-                // Flip the ownership of the BombDisc itself
-                discToFlip.set_owner(disc.get_owner());
-                System.out.println("BombDisc at " + position.getRow() + ", " + position.getCol() + " flipped to owner " + disc.get_owner());
+                flipSurroundingDiscs(new Position(position.getRow(), position.getCol()), disc.get_owner(), flippedPositionsForCurrentMove);
+                discToFlip.set_owner(disc.get_owner()); // Flip the ownership of the BombDisc itself
             }
             else if(discToFlip instanceof SimpleDisc)
             {
@@ -118,16 +130,10 @@ public boolean locate_disc(Position a, Disc disc) {
                 discToFlip.set_owner(disc.get_owner());
             }
         }
+        // Push flipped positions to the history stack
+        flippedPositionsHistory.push(flippedPositionsForCurrentMove);
     }
-
-
-    // Save flipped positions for undo functionality
-    //flippedPositionsHistory.push(new ArrayList<>(flippedpositions));
-    //moveHistory.push(new Move(a, disc));
-
-    // Debug: Show which player flipped the disc
-    String player = isFirstPlayerTurn ? "Player1" : "Player2";
-    System.out.println(player + " flipped the " + disc.getType());
+    System.out.println(); // Print space between moves
 
     // Switch turn
     isFirstPlayerTurn = !isFirstPlayerTurn;
@@ -160,7 +166,7 @@ public boolean locate_disc(Position a, Disc disc) {
 
 
 
-    private void flipSurroundingDiscs(Position bombPosition, Player owner) {
+    private void flipSurroundingDiscs(Position bombPosition, Player owner, List<Position> flippedPositions) {
         List<Position> bombPositions = new ArrayList<>();
 
         for (int[] direction : directions)
@@ -178,6 +184,14 @@ public boolean locate_disc(Position a, Disc disc) {
                 {
                     // Flip the disc
                     adjacentDisc.set_owner(owner);
+                    flippedPositions.add(adjacentPosition); // Track this flip
+                    // Print the flip caused by the bomb
+                    System.out.printf("Player %d flipped the %s in (%d, %d) due to bomb explosion\n",
+                            owner.isPlayerOne() ? 1 : 2,
+                            adjacentDisc.getType(),
+                            adjacentPosition.getRow(),
+                            adjacentPosition.getCol()
+                    );
 
                     // If the adjacent disc is another BombDisc, trigger its explosion
                     if (adjacentDisc instanceof BombDisc)
@@ -194,7 +208,7 @@ public boolean locate_disc(Position a, Disc disc) {
         for (Position bombPos : bombPositions)
         {
 
-            flipSurroundingDiscs(bombPos, owner);
+            flipSurroundingDiscs(bombPos, owner, flippedPositions);
             //bombFlippedPositionsHistory.push(new ArrayList<>()); // Prepare for nested flips
         }
     }
@@ -267,17 +281,107 @@ public boolean locate_disc(Position a, Disc disc) {
 
     @Override
     public int countFlips(Position a) {
-        Disc disc = new SimpleDisc(getCurrentPlayer());// Current player's disc
-        int totalFlips = 0;
+        Disc currentDisc = new SimpleDisc(getCurrentPlayer()); // Current player's disc
+        ArrayList<Position> uniqueFlippedPositions = new ArrayList<>(); // Track unique flipped positions
+        int bombs = 0;
 
-        // Check each direction and count flips
-        for (int[] direction : directions) {
-            List<Position> discsToFlipInDirection = getDiscsToFlipInDirection(a, disc, direction);
-            totalFlips += discsToFlipInDirection.size();
+        for (int[] direction : directions)
+        {
+            // Get discs to flip in this direction
+            List<Position> discsToFlip = getDiscsToFlipInDirection(a, currentDisc, direction);
+
+            // Check for BombDiscs in the flip sequence and process them
+            for (Position position : discsToFlip)
+            {
+                Disc discToFlip = board[position.getRow()][position.getCol()];
+                if (discToFlip instanceof BombDisc) {
+
+                    // Simulate bomb-triggered flips and add to the set
+                    simulateBombFlips(position, currentDisc.get_owner(), uniqueFlippedPositions, bombs);
+                }
+                if(!uniqueFlippedPositions.contains(position))
+                {
+                    uniqueFlippedPositions.add(position);
+
+                }
+            }
+
+            // Add all directional flips to the unique set
+            //uniqueFlippedPositions.addAll(discsToFlip);
         }
 
-        return totalFlips;
+        return uniqueFlippedPositions.size() - bombs; // Return the total number of unique flipped discs
     }
+
+    private void simulateBombFlips(Position bombPosition, Player owner, ArrayList<Position> flippedPositions, int bombs) {
+        List<Position> bombTriggeredPositions = new ArrayList<>();
+        if(bombs == 0) {bombs = 1;}
+        for (int[] direction : directions) {
+            int row = bombPosition.getRow() + direction[0];
+            int col = bombPosition.getCol() + direction[1];
+
+            // Check bounds
+            if (row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE) {
+                Position adjacentPosition = new Position(row, col);
+                Disc adjacentDisc = board[row][col];
+
+                if (adjacentDisc != null && !adjacentDisc.get_owner().equals(owner)) {
+                    // Add to flipped positions only if not already added
+                    if (flippedPositions.add(adjacentPosition)) {
+                        // If the adjacent disc is another BombDisc, queue it for further explosions
+                        if (adjacentDisc instanceof BombDisc && !flippedPositions.contains(adjacentPosition)) {
+
+                            bombTriggeredPositions.add(adjacentPosition);
+                        }
+                    }
+                }
+            }
+        }
+        bombs += bombTriggeredPositions.size();
+
+        // Recursively process all bomb-triggered positions
+        for (Position triggeredPosition : bombTriggeredPositions) {
+            simulateBombFlips(triggeredPosition, owner, flippedPositions,bombs);
+        }
+
+    }
+
+//        int bombFlips = 0;
+//
+//        for (int[] direction : directions)
+//        {
+//            int row = bombPosition.getRow() + direction[0];
+//            int col = bombPosition.getCol() + direction[1];
+//
+//            // Check bounds
+//            if (row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE)
+//            {
+//                Position nearBombPosition = new Position(row, col);
+//
+//                // Skip already flipped discs and futured positioned disc to avoid double counting
+//                if (globalFlipped.contains(nearBombPosition) || nearBombPosition.equals(a)) {break;}
+//
+//                Disc nearBombDisc = board[row][col];
+//                if (nearBombDisc != null && !nearBombDisc.get_owner().equals(owner) && !globalFlipped.contains(nearBombPosition))
+//                {
+//                    bombFlips++; // Count this flip
+//                    globalFlipped.add(nearBombPosition);
+//
+//                    // If the adjacent disc is another BombDisc, recursively simulate its explosion
+//                    if (nearBombDisc instanceof BombDisc && !globalFlipped.contains(nearBombPosition))
+//                    {
+//                        bombFlips = bombFlips + simulateBombFlips(nearBombPosition, owner, globalFlipped, a);
+//                    }
+//                }
+//            }
+//        }
+//        System.out.println(globalFlipped.size() + "- global size in simulateBombFlips. this is bombFlips size - " + bombFlips);
+//
+//        return bombFlips;
+//    }
+
+
+
 
     @Override
     public Player getFirstPlayer() {
@@ -350,11 +454,13 @@ public boolean locate_disc(Position a, Disc disc) {
 
 @Override
 public void undoLastMove() {
-    if (boardHistory.isEmpty() || moveHistory.isEmpty()) {
-        System.out.println("Nothing to undo, already at initial board state");
+    if (boardHistory.isEmpty() || moveHistory.isEmpty() || flippedPositionsHistory.isEmpty())
+    {
+        System.out.println("No previous move available to undo.");
         return;
     }
 
+    System.out.println("Undoing last move:");
     // Pop the last move from the history
     Move lastMove = moveHistory.pop();
     Position pos = lastMove.getPosition();
@@ -367,6 +473,26 @@ public void undoLastMove() {
     {
         disc.get_owner().number_of_bombs++;
     }
+
+    // Print removing placed disc
+    System.out.printf("\tUndo: removing %s from (%d, %d)\n", disc.getType(), pos.getRow(), pos.getCol());
+
+    // Revert flipped discs
+    List<Position> lastFlippedPositions = flippedPositionsHistory.pop();
+    for (Position flippedPos : lastFlippedPositions)
+    {
+        Disc flippedDisc = board[flippedPos.getRow()][flippedPos.getCol()];
+        if (flippedDisc != null)
+        {
+            flippedDisc.set_owner(flippedDisc.get_owner().equals(player1) ? player2 : player1);
+            System.out.printf("\tUndo: flipping back %s in (%d, %d)\n",
+                    flippedDisc.getType(),
+                    flippedPos.getRow(),
+                    flippedPos.getCol()
+            );
+        }
+    }
+    System.out.println(); // Print space between moves
 
     Disc[][] lastBoard = boardHistory.pop();
     for(int i=0;i<BOARD_SIZE;i++)
@@ -446,13 +572,6 @@ public void undoLastMove() {
     isFirstPlayerTurn = !isFirstPlayerTurn;
     placedDiscsCount--;
 
-    // Reset to initial state if no moves remain
-//    if (moveHistory.isEmpty()) {
-//        System.out.println("Reached the initial board state");
-//        initializeBoard();
-//        isFirstPlayerTurn = true;
-//        placedDiscsCount = 4; // Adjust according to initial setup
-//    }
 }
 
     //This method returns list of all the positions of discs on the board that needs to be flipped.
@@ -484,7 +603,8 @@ public void undoLastMove() {
             {
                 discsToFlip.add(new Position(row, col));
                 //System.out.println("Adding disc to flip at: " + row + ", " + col);
-            } else
+            }
+            else
             {
                 // We found a matching disc after opponent discs, so the move is valid in this direction
                 if (!discsToFlip.isEmpty())
