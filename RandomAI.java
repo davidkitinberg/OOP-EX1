@@ -55,8 +55,6 @@ public class RandomAI extends AIPlayer {
             {
                 aiDisc = new SimpleDisc(this);
             }
-            Position selectedMove = moves.get(randomNum);
-            System.out.println("RandomAI selected move at position: " + selectedMove + " with owner: " + aiDisc.get_owner());
         return new Move(moves.get(randomNum), aiDisc);
     }
 
