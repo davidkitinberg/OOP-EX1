@@ -229,17 +229,9 @@ public class GameLogic implements PlayableLogic {
     public boolean isValidMove(Position a, Disc disc)
     {
         // Ensure disc isn't null to avoid unnecessary checks
-        if (disc == null) {
-            //System.out.println("Skipping position due to null disc at Position: " + a.getRow() + ", " + a.getCol());
+        if (disc == null || board[a.getRow()][a.getCol()] != null) {
             return false;
         }
-
-        // Check if the cell is empty
-        if (board[a.getRow()][a.getCol()] != null) {
-            //System.out.println("Position already occupied");
-            return false;
-        }
-
         List<Position> collectionOfDiscsToFlip = new ArrayList<>();
 
         // Check each direction
@@ -280,7 +272,7 @@ public class GameLogic implements PlayableLogic {
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
                 Position potentialPosition = new Position(row, col);
-                if (isValidMove(potentialPosition, currentDisc)) {
+                if (isValidMove(potentialPosition, currentDisc) && !(countFlips(potentialPosition) == 0)) {
                     validMoves.add(potentialPosition);
                 }
             }
@@ -337,6 +329,14 @@ public class GameLogic implements PlayableLogic {
             if (uniqueKeys.add(key))
             {
                 uniquePositions.add(position);
+            }
+        }
+        for (Position position : positions)
+        {
+            Disc disc = board[position.getRow()][position.getCol()];
+            if(disc instanceof  UnflippableDisc)
+            {
+                uniquePositions.remove(position);
             }
         }
 
@@ -576,7 +576,7 @@ public void undoLastMove() {
     /**
      * This function's purpose is to return current player.
      */
-    private Player getCurrentPlayer() {
+    public Player getCurrentPlayer() {
         return isFirstPlayerTurn() ? player1 : player2;
     }
 }

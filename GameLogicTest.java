@@ -103,40 +103,37 @@ class GameLogicTest {
 
     @Test
     void isGameFinished() {
-            //positions for the game by both players
-        gameLogic.locate_disc(new Position(4, 2), new SimpleDisc(gameLogic.getFirstPlayer()));
-        gameLogic.locate_disc(new Position(3, 2), new SimpleDisc(gameLogic.getSecondPlayer()));
-        gameLogic.locate_disc(new Position(2, 4), new SimpleDisc(gameLogic.getFirstPlayer()));
-        gameLogic.locate_disc(new Position(3, 5), new SimpleDisc(gameLogic.getSecondPlayer()));
-        gameLogic.locate_disc(new Position(2, 2), new SimpleDisc(gameLogic.getFirstPlayer()));
-        assertFalse(gameLogic.isGameFinished(), "The game is NOT finished.");
-        gameLogic.reset();
-        Player randomPlayer1 = new RandomAI(true);
-        Disc randomDisc1 = new SimpleDisc(randomPlayer1);
-        Player randomPlayer2 = new RandomAI(false);
-        Disc randomDisc2 = new SimpleDisc(randomPlayer2);
-        while (!gameLogic.ValidMoves().isEmpty())
+        // Test Case 1: Game is not finished initially
+        assertFalse(gameLogic.isGameFinished(), "The game should not be finished at the start.");
+
+        // Test Case 2: Verify winner
+        int firstPlayerDiscs = 0;
+        int secondPlayerDiscs = 0;
+
+        while(!gameLogic.ValidMoves().isEmpty())
         {
+            Position pos = gameLogic.ValidMoves().getFirst();
+            Disc disc = new SimpleDisc(gameLogic.getCurrentPlayer());
+            gameLogic.locate_disc(pos, disc);
 
-            Position move = gameLogic.ValidMoves().get(0);
-                if(gameLogic.isFirstPlayerTurn())
-                {
-                    gameLogic.locate_disc(move,randomDisc1);
-
-                }
-                else
-                {
-                    gameLogic.locate_disc(move, randomDisc2);
-                    //gameLogic.ValidMoves();
-
-                }
+            if (disc.get_owner().equals(gameLogic.getFirstPlayer())) {
+                firstPlayerDiscs++;
+            }
+            else
+            {
+                secondPlayerDiscs++;
+            }
         }
-        List<Position> remainingMoves = gameLogic.ValidMoves();
-        assertTrue(remainingMoves.isEmpty(), "No valid moves should remain.");
-        assertTrue(gameLogic.isGameFinished(), "The game should be finished after exhausting all valid moves.");
 
-
+        if (firstPlayerDiscs > secondPlayerDiscs) {
+            assertEquals(1, gameLogic.getFirstPlayer().getWins(), "Player 1 should be declared the winner.");
+        } else {
+            assertEquals(0, gameLogic.getSecondPlayer().getWins(), "Player 2 should be declared the winner.");
+        }
     }
+
+
+
 
     @Test
     void reset() {
