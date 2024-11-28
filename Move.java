@@ -5,7 +5,6 @@ public class Move
 {
     private final Position position;           // The position where the move was made
     private final Disc placedDisc;             // The disc that was placed
-
 public Move(Position position, Disc placedDisc)
 {
     this.position = position;
